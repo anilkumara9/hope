@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
 
 # Distribution / packaging
 .Python
@@ -22,3 +23,16 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# compress_resnet50.py outputs: default --output_dir, and the runs/ directory used in the examples
+hope_resnet50_output/
+runs/
+
+# Preprocessed ImageNet evaluation cache, in case --cache_dir points inside the repository
+# (default location: $XDG_CACHE_HOME/hope or ~/.cache/hope)
+*_validation_first*px_*

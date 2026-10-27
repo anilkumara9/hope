@@ -1,0 +1,23 @@
+# HOPE: Hilbert Operator for Progressive Encoding & DEFT Transfer Learning.
+#
+# The core compression library (hope.py), baselines (hope_baselines.py), and self-test (test_hope.py)
+# need only NumPy and SciPy.
+# NumPy 2 is required: the reference results follow NumPy 2's NEP 50 type-promotion rules, and with
+# NumPy 1.x the encoder can differ in the last bits and in tie-breaks.
+numpy>=2.0
+scipy>=1.13                # first SciPy release built for NumPy 2 (provides scipy.special.owens_t)
+
+# ImageNet runner (compress_resnet50.py) and cross-domain transfer benchmark (deft.py).
+keras>=3.5                 # Keras 3 multi-backend API; 3.5 is the first release declaring NumPy 2 compatibility
+tensorflow>=2.18           # dataset loading/preprocessing via tf.data (and default Keras backend for compress_resnet50.py)
+tensorflow-datasets>=4.9   # ImageNet 2012 ('imagenet2012' v5.1.0), CIFAR-100 ('cifar100'), and SVHN ('svhn_cropped')
+
+# Cross-domain transfer learning benchmark (deft.py).
+jax>=0.4.30                # JIT-compiled forward/backward passes, per-example vmap Fisher (EWC), and Keras JAX backend
+optax>=0.2.2               # SGD with heavy-ball momentum and cross-entropy losses in JAX
+
+# Optional:
+#   matplotlib>=3.9        accuracy-versus-density plot (plot_compression_curves.py, compress_resnet50.py)
+#   Pillow                 fallback PNG renderer in plot_compression_curves.py when matplotlib is absent
+#   torch                  run compress_resnet50.py on the PyTorch Keras backend (--backend torch)
+#   pytest                 python -m pytest test_hope.py
