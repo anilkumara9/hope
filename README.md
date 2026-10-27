@@ -10,15 +10,15 @@ Fine-Tuning*):
 1. **Data-Free Progressive Model Compression (`hope.py`, `compress_resnet50.py`,
    `hope_baselines.py`, `plot_compression_curves.py`):** HOPE compresses an
    ImageNet-pretrained ResNet-50 (Keras) through a sequence of analytical steps
-   — pruning a neuron (`PRUNE`), merging two neurons into one synthesized parent
-   neuron (`MERGE`), or evicting the residual branch of a bottleneck block
-   (`EVICT`) — selected greedily by a rate-distortion criterion. Every step is
-   recorded together with the information needed to undo it. The resulting
-   *curriculum* lets the compressed network be decoded step by step to any
-   intermediate density, or all the way back to the pretrained network (lossless
-   up to float32 round-off). HOPE is strictly data-free: every cost is evaluated
-   in closed form from the weights and the stored BatchNorm parameters and
-   statistics. It uses no training images, no calibration data, and no
+   (pruning a neuron via `PRUNE`, merging two neurons into one synthesized
+   parent neuron via `MERGE`, or evicting the residual branch of a bottleneck
+   block via `EVICT`), selected greedily by a rate-distortion criterion. Every
+   step is recorded together with the information needed to undo it. The
+   resulting *curriculum* lets the compressed network be decoded step by step to
+   any intermediate density, or all the way back to the pretrained network
+   (lossless up to float32 round-off). HOPE is strictly data-free: every cost is
+   evaluated in closed form from the weights and the stored BatchNorm parameters
+   and statistics. It uses no training images, no calibration data, and no
    fine-tuning; ImageNet is only needed to measure the accuracy of the
    compressed networks. On ResNet-50, HOPE operates on the 16 bottleneck blocks
    (32 quadruplets, 7,552 neurons); the full curriculum has 3,066 steps (2,983
@@ -37,12 +37,14 @@ Fine-Tuning*):
    [Cross-domain transfer learning with DEFT
    (`deft.py`)](#cross-domain-transfer-learning-with-deft-deftpy)).
 
-For full derivations, see the HOPE paper ([Citation](#citation)).
+For full derivations, see [*Hilbert Operator for Progressive Encoding (HOPE): A
+Mathematical Framework for Deconstructing Learned Representations in Deep
+Networks*](https://arxiv.org/abs/2607.21366) ([Citation](#citation)).
 
 ## Method
 
-HOPE treats each hidden neuron of a bottleneck block — a convolution filter with
-its BatchNorm (BN), its ReLU and its slice of the next convolution — as a rank-1
+HOPE treats each hidden neuron of a bottleneck block (a convolution filter with
+its BatchNorm (BN), its ReLU, and its slice of the next convolution) as a rank-1
 Hilbert–Schmidt operator $f_i = g_i \otimes w_{\mathrm{out},i}$. The norm of
 this operator (the neuron's *capacity*) and the inner products between neurons
 are computed in closed form under a Gaussian surrogate built from the stored BN
@@ -364,9 +366,9 @@ results below:
 - **Metric:** top-1 accuracy of Keras' ResNet-50 (1000-way classifier) with the
   evaluated weights loaded by `model.set_weights`.
 - **Density:** the number of nonzero entries over all weight tensors of the
-  network — including biases, BN parameters and statistics, and the parts that
-  HOPE never modifies (stem, shortcut projections, classifier) — divided by the
-  same count for the pretrained network (25,610,216).
+  network (including biases, BN parameters and statistics, and the parts that
+  HOPE never modifies: stem, shortcut projections, and classifier), divided by
+  the same count for the pretrained network (25,610,216).
 - **Step:** step 0 is the pretrained network; step *t* is the network after *t*
   encoding steps.
 
@@ -428,7 +430,8 @@ All code symbols below refer to [`hope.py`](hope.py).
 ## Cross-domain transfer learning with DEFT (`deft.py`)
 
 [`deft.py`](deft.py) implements **Dispersed Elastic Fine-Tuning (DEFT)** from
-Section 10.2, Appendix H, Appendix I, and Algorithm 3 of the HOPE paper. DEFT
+Section 10.2, Appendix H, Appendix I, and Algorithm 3 of
+[the HOPE paper](https://arxiv.org/abs/2607.21366). DEFT
 runs HOPE's progressive encoder (`hope.hope_encode`) on a pretrained source
 network to completion and uses the resulting pruning costs to partition each
 hidden layer into a frozen **Universal Core** $\mathcal{F}_{\mathrm{core}}$ and
@@ -551,8 +554,8 @@ All code symbols below refer to [`deft.py`](deft.py) (with progressive encoding 
   factors. The operator and its capacity are the same; only the ratio of the
   input and output weight norms differs.
 - **Other details** in which the code differs from the paper's idealized
-  formulas — least-squares span coefficients for the parent's BN statistics,
-  numerical guards, parameter footprints counted from tensor shapes — are
+  formulas (least-squares span coefficients for the parent's BN statistics,
+  numerical guards, and parameter footprints counted from tensor shapes) are
   documented where they occur in `hope.py`.
 - **Run time and memory** (shared 64-core CPU server, no GPU). Encoding
   ResNet-50 with 4 BLAS threads took 7 to 10 minutes in our runs (up to 13
@@ -570,12 +573,17 @@ All code symbols below refer to [`deft.py`](deft.py) (with progressive encoding 
 
 Hossein Mobahi and Peter L. Bartlett. *Hilbert Operator for Progressive Encoding
 (HOPE): A Mathematical Framework for Deconstructing Learned Representations in
-Deep Networks.*
+Deep Networks.* arXiv preprint
+[arXiv:2607.21366](https://arxiv.org/abs/2607.21366), 2026.
 
 ```tex
 @article{mobahi2026hope,
   title={Hilbert Operator for Progressive Encoding ({HOPE}): A Mathematical Framework for Deconstructing Learned Representations in Deep Networks},
   author={Mobahi, Hossein and Bartlett, Peter L.},
+  journal={arXiv preprint arXiv:2607.21366},
+  eprint={2607.21366},
+  archivePrefix={arXiv},
+  url={https://arxiv.org/abs/2607.21366},
   year={2026}
 }
 ```

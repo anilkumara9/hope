@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Licensed under the Apache License, Version 2.0 (the "License");
 # http://www.apache.org/licenses/LICENSE-2.0
-"""HOPE: Hilbert Operator for Progressive Encoding — Data-Free Structured Compression Baselines.
+"""HOPE (Hilbert Operator for Progressive Encoding): Data-Free Structured Compression Baselines.
 
 Implements the seven strictly data-free structured neuron compression baselines
 evaluated against
-HOPE on an ImageNet-pretrained ResNet-50 (Section 10.1.3 of the HOPE paper):
+HOPE on ResNet-50 (Section 10.1.3 of https://arxiv.org/abs/2607.21366):
 
   1. L1_IN             L1-Norm Input Filter Pruning (Li et al., ICLR 2017)
                        s_i = ||w_in,i^eff||_1

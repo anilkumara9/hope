@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Licensed under the Apache License, Version 2.0 (the "License");
 # http://www.apache.org/licenses/LICENSE-2.0
-"""DEFT: Dispersed Elastic Fine-Tuning — cross-domain transfer learning (CIFAR-100 -> SVHN) instantiation.
+"""DEFT (Dispersed Elastic Fine-Tuning): cross-domain transfer learning (CIFAR-100 -> SVHN) instantiation.
 
 Data-free structural partitioning of a pretrained neural network into a frozen
 Universal Core and a plastic Slack via
@@ -20,7 +20,7 @@ DEFT resolves the stability-plasticity dilemma in transfer learning by
 converting HOPE's data-free progressive
 compression curriculum into a hard neuron partition and an exact subspace
 projection (Section 10.2, Appendix I, and
-Algorithm 3 of the HOPE paper):
+Algorithm 3 of the HOPE paper, https://arxiv.org/abs/2607.21366):
 
   1. Progressive encoding and pruning-cost pool (Section 10.2.2, Algorithm 3
   Phase 1):
@@ -59,7 +59,7 @@ Algorithm 3 of the HOPE paper):
      participants M) and a plastic Slack
      F_slack = {j : E_j = 1} (low-cost unmerged neurons).
 
-  3. Consistency at initialization — the structural mask (Axiom I.1, Theorem
+  3. Consistency at initialization via the structural mask (Axiom I.1, Theorem
   I.1, Algorithm 3 Phase 2):
      At initialization t = 0, DEFT severs all weight projections from upstream
      slack neurons (E_in,j > 0) to
