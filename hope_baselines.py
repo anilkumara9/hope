@@ -1098,7 +1098,13 @@ def baseline_encode(
     if eval_stride > 0 and (
         step_counter % eval_stride == 0 or step_counter < 5
     ):
-      density = float(current_params) / float(total_params_initial)
+      # An all-zero input network has total_params_initial == 0; report
+      # density 0.0 for it instead of dividing by zero.
+      density = (
+          float(current_params) / float(total_params_initial)
+          if total_params_initial > 0
+          else 0.0
+      )
       acc = float(eval_fn(current_weights)) if eval_fn is not None else 0.0
       results.append((np.float64(density), np.float64(acc)))
       if resolved_output_file is not None and eval_fn is not None:
@@ -1134,7 +1140,11 @@ def baseline_encode(
     step_counter += 1
 
   if eval_stride > 0 and step_counter > 0:
-    final_density = float(current_params) / float(total_params_initial)
+    final_density = (
+        float(current_params) / float(total_params_initial)
+        if total_params_initial > 0
+        else 0.0
+    )
     final_acc = float(eval_fn(current_weights)) if eval_fn is not None else 0.0
     results.append((np.float64(final_density), np.float64(final_acc)))
 
