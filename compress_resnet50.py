@@ -81,6 +81,8 @@ Outputs (in ``--output_dir``)
 """
 
 import argparse
+import contextlib
+import glob
 import json
 import logging
 import os
@@ -89,7 +91,7 @@ import platform
 import re
 import sys
 import time
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
 import warnings
 
 import hope
@@ -575,6 +577,25 @@ def _versions(keras: Any) -> Dict[str, str]:
   }
 
 
+@contextlib.contextmanager
+def _atomic_output(path: str, mode: str = "wb") -> Iterator[Any]:
+  """Opens ``path`` for writing through a temporary sibling, renamed over ``path`` on success.
+
+  Mirrors build_eval_cache's write-then-rename pattern: if the run is
+  interrupted or fails mid-write, any previous contents of ``path`` are left
+  untouched and no valid-looking but incomplete file (e.g. an ``.npz`` holding
+  only some of the tensors) appears under the final name.
+  """
+  tmp_path = f"{path}.partial{os.getpid()}"
+  try:
+    with open(tmp_path, mode) as f:
+      yield f
+    os.replace(tmp_path, path)
+  finally:
+    if os.path.exists(tmp_path):
+      os.remove(tmp_path)
+
+
 # ----------------------------------------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------------------------------------
@@ -911,7 +932,7 @@ def run(args: argparse.Namespace) -> int:
     # Also write two-column results_<METHOD>.csv for plot_compression_curves.py
     # compatibility.
     method_csv_path = os.path.join(args.output_dir, method_csv_name)
-    with open(method_csv_path, "w") as f_csv:
+    with _atomic_output(method_csv_path, "w") as f_csv:
       f_csv.write("density,accuracy\n")
       for _, d_val, a_val in log.rows:
         f_csv.write(f"{float(d_val):.6f},{float(a_val):.6f}\n")
@@ -932,8 +953,9 @@ def run(args: argparse.Namespace) -> int:
   # 3. Save the compressed weights and the curriculum (decoding order).
   weights_path = os.path.join(args.output_dir, WEIGHTS_NAME)
   curriculum_path = os.path.join(args.output_dir, CURRICULUM_NAME)
-  np.savez(weights_path, **compressed)
-  with open(curriculum_path, "wb") as f:
+  with _atomic_output(weights_path) as f:
+    np.savez(f, **compressed)
+  with _atomic_output(curriculum_path) as f:
     pickle.dump(
         {
             "curriculum": curriculum,
@@ -1007,7 +1029,7 @@ def run(args: argparse.Namespace) -> int:
           "plot": plot_path,
       },
   }
-  with open(os.path.join(args.output_dir, SUMMARY_NAME), "w") as f:
+  with _atomic_output(os.path.join(args.output_dir, SUMMARY_NAME), "w") as f:
     json.dump(summary, f, indent=1)
   logger.info(
       "Done in %s. Outputs are in %s",
