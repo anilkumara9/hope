@@ -2306,6 +2306,12 @@ def hope_decode_step(
   """
   action = packet.action
   if action == "EVICT":
+    if packet.saved_block_tensors is None:
+      raise ValueError(
+          "Cannot decode an EVICT packet with saved_block_tensors=None: "
+          "undoing an eviction requires the block tensors the encoder saved "
+          "in the packet."
+      )
     for path, saved in packet.saved_block_tensors.items():
       weights[path][:] = saved
     return weights
