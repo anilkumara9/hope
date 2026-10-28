@@ -91,7 +91,16 @@ import platform
 import re
 import sys
 import time
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+)
 import warnings
 
 import hope
@@ -579,7 +588,9 @@ def _versions(keras: Any) -> Dict[str, str]:
 
 @contextlib.contextmanager
 def _atomic_output(path: str, mode: str = "wb") -> Iterator[Any]:
-  """Opens ``path`` for writing through a temporary sibling, renamed over ``path`` on success.
+  """Opens ``path`` for writing through a temporary sibling file.
+
+  The temporary file is renamed over ``path`` on success.
 
   Mirrors build_eval_cache's write-then-rename pattern: if the run is
   interrupted or fails mid-write, any previous contents of ``path`` are left
