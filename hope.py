@@ -2396,11 +2396,18 @@ def hope_decode(
       modified).
     curriculum: Sequence of `InstructionPacket`s in decoding order.
     num_steps: Number of packets from the start of `curriculum` to apply, or
-      None to apply all packets.
+      None to apply all packets. Must be non-negative when given.
 
   Returns:
     New dictionary of decoded weight arrays.
+
+  Raises:
+    ValueError: If `num_steps` is negative.
   """
+  if num_steps is not None and num_steps < 0:
+    raise ValueError(
+        f"num_steps must be None or a non-negative integer, got {num_steps!r}."
+    )
   decoded = {k: v.copy() for k, v in weights.items()}
   for packet in itertools.islice(curriculum, num_steps):
     hope_decode_step(decoded, packet)
