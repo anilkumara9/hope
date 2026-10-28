@@ -2305,9 +2305,10 @@ def hope_decode_step(
   kernel = w_in^eff / (gamma / sqrt(var + eps) + RAW_WEIGHT_DIV_GUARD), which is
   exact up to rounding for ordinary neurons (5.96e-8 maximum error on the
   pretrained ResNet-50). It cannot recover the filter of a neuron whose BN scale
-  gamma / sqrt(var + eps) is zero or not large compared with the guard, and it
-  is inexact (NaN below -eps) for a negative stored moving variance, which the
-  encoder's BN folding clamps at 0.
+  gamma / sqrt(var + eps) is zero or not large compared with the guard. A
+  negative stored moving variance is clamped at 0, exactly as in the encoder's
+  BN folding, so such neurons are recovered with the clamped scale instead of
+  producing NaN.
 
   Args:
     weights: Mapping from Keras tensor name to array, modified in place.
@@ -2351,8 +2352,8 @@ def hope_decode_step(
     w_in_i, w_out_i = row_i[:fan_in], row_i[fan_in:]
     w_in_j, w_out_j = row_j[:fan_in], row_j[fan_in:]
 
-    bn_scale_i = gamma_i / np.sqrt(var_i + BN_EPSILON)
-    bn_scale_j = gamma_j / np.sqrt(var_j + BN_EPSILON)
+    bn_scale_i = gamma_i / np.sqrt(max(float(var_i), 0.0) + BN_EPSILON)
+    bn_scale_j = gamma_j / np.sqrt(max(float(var_j), 0.0) + BN_EPSILON)
 
     kernel_a[..., i] = (w_in_i / (bn_scale_i + RAW_WEIGHT_DIV_GUARD)).reshape(
         kernel_a.shape[:-1]
@@ -2374,7 +2375,7 @@ def hope_decode_step(
 
     row = packet.victim_row_before
     w_in, w_out = row[:fan_in], row[fan_in:]
-    bn_scale = gamma_i / np.sqrt(var_i + BN_EPSILON)
+    bn_scale = gamma_i / np.sqrt(max(float(var_i), 0.0) + BN_EPSILON)
     kernel_a[..., i] = (w_in / (bn_scale + RAW_WEIGHT_DIV_GUARD)).reshape(
         kernel_a.shape[:-1]
     )
