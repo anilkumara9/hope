@@ -2090,10 +2090,33 @@ def _unpack_curriculum_entry(
         float(packet.e_b),
         int(packet.n_active),
     )
+  action = str(packet["action"])
+  # Legacy dicts store the neuron indices either bare (`(i,)` for PRUNE,
+  # `(i, j)` for MERGE) or in `InstructionPacket` shape (`(-1, i, conv)` for
+  # PRUNE, `(i, j, conv)` for MERGE, `(conv_1, conv_2, conv_3)` for EVICT).
+  # Keep only the integer-convertible entries (dropping any layer-name
+  # strings, which made this branch raise `ValueError` on packet-shaped
+  # dicts) and select the neuron indices exactly as in the packet branch
+  # above.
+  int_indices = []
+  for idx in packet["indices"]:
+    try:
+      int_indices.append(int(idx))
+    except (TypeError, ValueError):
+      continue
+  if action == "PRUNE":
+    # `(-1, i, conv)` stores the neuron at position 1; a bare `(i,)` at 0.
+    indices = (int_indices[1],) if int_indices[:1] == [-1] else (
+        int_indices[0],
+    )
+  elif action == "MERGE":
+    indices = tuple(int_indices[:2])
+  else:
+    indices = ()
   return (
-      str(packet["action"]),
+      action,
       str(packet["layer_name"]),
-      tuple(int(idx) for idx in packet["indices"]),
+      indices,
       float(packet["norm"]),
       float(packet["E_b"]),
       int(packet["N_active"]),
