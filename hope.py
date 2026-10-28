@@ -600,6 +600,15 @@ def consumer_tap_fractions(
   224 x 224 inputs) by exact layer name `conv_b` first and then by prefix
   `conv_b[:5]`, falling back to 14.0.
 
+  For any other kernel size (e.g. 5x5, 7x7, or a non-square kernel) the
+  returned fractions are all ones: every tap is treated as reading inside
+  the feature map. That is an approximation, not the exact in-bounds
+  fraction (for a k x k kernel with padding (k - 1) / 2 the exact 1D
+  fractions taper below 1 near the edges, as in the 3x3 case above), and
+  it is what the encoder's cost model uses for such consumers. ResNet-50
+  bottleneck consumers are only ever 1x1 or 3x3, so the reference ResNet
+  pipeline never takes this path.
+
   Args:
     kernel_b: Consumer kernel of shape (h_b, w_b, c_in, c_out) or (c_in, c_out).
     conv_b: Name of the consumer layer.
