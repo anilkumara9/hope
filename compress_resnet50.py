@@ -1039,6 +1039,37 @@ def run(args: argparse.Namespace) -> int:
   return 0 if lossless else 1
 
 
+def _interrupted_note(args: argparse.Namespace, started: float) -> str:
+  """Returns a pointer to the accuracy rows this run actually wrote, or "".
+
+  Only files modified at or after ``started`` (the beginning of this run)
+  count: in --method ALL mode the rows live in results_*.csv files (never in
+  density_accuracy.csv), and a density_accuracy.csv left over from a previous
+  run in the same output directory must not be presented as this run's
+  partial results.
+  """
+
+  def fresh(path: str) -> bool:
+    try:
+      return os.path.getmtime(path) >= started
+    except OSError:
+      return False
+
+  if args.method == "ALL":
+    written = sorted(
+        p
+        for p in glob.glob(os.path.join(args.output_dir, "results_*.csv"))
+        if fresh(p)
+    )
+    if not written:
+      return ""
+    return f" Accuracy rows written so far are in {', '.join(written)}."
+  csv_path = os.path.join(args.output_dir, CSV_NAME)
+  if args.eval_stride > 0 and fresh(csv_path):
+    return f" Accuracy rows written so far are in {csv_path}."
+  return ""
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
   """Command-line entry point.
 
@@ -1064,19 +1095,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
       plot_compression_curves.__name__,
   ):
     logging.getLogger(name).setLevel(getattr(logging, args.log_level))
+  started = time.time()
   try:
     return run(args)
   except (FileNotFoundError, RuntimeError) as e:
     logger.error("%s", e, exc_info=logger.isEnabledFor(logging.DEBUG))
     return 2
   except KeyboardInterrupt:
-    csv_path = os.path.join(args.output_dir, CSV_NAME)
-    logger.warning(
-        "Interrupted.%s",
-        f" Accuracy rows written so far are in {csv_path}"
-        if args.eval_stride > 0 and os.path.exists(csv_path)
-        else "",
-    )
+    logger.warning("Interrupted.%s", _interrupted_note(args, started))
     return 130
 
 
