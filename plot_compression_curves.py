@@ -209,6 +209,15 @@ def _render_with_pil_fallback(
     pts = [to_px(float(r[0]), float(r[1])) for r in arr]
     if len(pts) >= 2:
       draw.line(pts, fill=_FALLBACK_RGB.get(color, (0, 0, 0)), width=5)
+    elif len(pts) == 1:
+      # A single-point curve (e.g. only the initial point of an
+      # interrupted run) has no line to draw; mark the point instead so
+      # the curve is visible on the axes, not just in the legend.
+      px, py = pts[0]
+      draw.ellipse(
+          [px - 7, py - 7, px + 7, py + 7],
+          fill=_FALLBACK_RGB.get(color, (0, 0, 0)),
+      )
 
   xlab = "Model Density"
   xb = draw.textbbox((0, 0), xlab, font=font_label)
@@ -340,7 +349,17 @@ def plot_compression_curves(
   with plt.rc_context(rc_overrides):
     fig, ax = plt.subplots(figsize=(10, 6))
     for label, arr, color in loaded_curves:
-      ax.plot(arr[:, 0], arr[:, 1], color=color, label=label)
+      # Single-point curves need a marker: a one-vertex line draws
+      # nothing, so the curve would appear in the legend but not on the
+      # axes.
+      ax.plot(
+          arr[:, 0],
+          arr[:, 1],
+          color=color,
+          label=label,
+          marker="o" if len(arr) == 1 else None,
+          markersize=6,
+      )
 
     ax.set_xlabel("Model Density")
     ax.set_ylabel("Test Accuracy")
