@@ -105,9 +105,16 @@ def load_density_accuracy_file(filepath: str) -> Optional[np.ndarray]:
         # 'step,density,top1_accuracy').
         continue
       if len(vals) == 2:
-        rows.append((vals[0], vals[1]))
+        row = (vals[0], vals[1])
       elif len(vals) >= 3:
-        rows.append((vals[1], vals[2]))
+        row = (vals[1], vals[2])
+      else:
+        continue
+      # Non-finite pairs (e.g. a 'nan' accuracy recorded by a failing
+      # evaluator) are not plottable: they poison matplotlib autoscaling
+      # and crash the Pillow fallback's pixel conversion, so drop them.
+      if np.isfinite(row[0]) and np.isfinite(row[1]):
+        rows.append(row)
 
   if not rows:
     logger.warning(
