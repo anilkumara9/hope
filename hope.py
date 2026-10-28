@@ -561,9 +561,16 @@ def read_quadruplet(
   bn_scale = gamma * inv_std
 
   w_in_eff = kernel_a_4d * bn_scale.reshape(1, 1, 1, -1)
-  w_in_rows = w_in_eff.reshape(-1, w_in_eff.shape[-1]).T
+  # Explicit reshape dimensions (not -1): a zero-width layer (a kernel
+  # dimension of size 0) makes a -1 dimension impossible to infer and
+  # NumPy raises "cannot reshape array of size 0" for it.
+  w_in_rows = w_in_eff.reshape(
+      w_in_eff.shape[0] * w_in_eff.shape[1] * w_in_eff.shape[2],
+      w_in_eff.shape[3],
+  ).T
   w_out_rows = kernel_b_4d.transpose(2, 0, 1, 3).reshape(
-      kernel_b_4d.shape[2], -1
+      kernel_b_4d.shape[2],
+      kernel_b_4d.shape[0] * kernel_b_4d.shape[1] * kernel_b_4d.shape[3],
   )
 
   joint_weights = np.hstack([w_in_rows, w_out_rows])
