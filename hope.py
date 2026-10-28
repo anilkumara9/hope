@@ -1485,6 +1485,18 @@ class _EncoderState:
 # ==============================================================================
 
 
+def _nonzero_density(nonzeros: int, initial_nonzeros: int) -> float:
+  """Density `nonzeros / initial_nonzeros`, defined as 0.0 for a zero model.
+
+  A weights dictionary whose tensors are all zero (or empty) has
+  `initial_nonzeros == 0`; its density is 0.0 at every step instead of
+  raising `ZeroDivisionError`.
+  """
+  if initial_nonzeros == 0:
+    return 0.0
+  return float(nonzeros) / float(initial_nonzeros)
+
+
 def _write_density_accuracy_csv(
     path: str, rows: Sequence[Tuple[float, float]]
 ) -> None:
@@ -1585,7 +1597,7 @@ def hope_encode(
 
     if eval_stride > 0 and step % eval_stride == 0:
       nonzeros = sum(np.count_nonzero(v) for v in state.weights.values())
-      density = float(nonzeros) / float(initial_nonzeros)
+      density = _nonzero_density(nonzeros, initial_nonzeros)
       value = float(eval_fn(state.weights)) if eval_fn is not None else 0.0
       history.append((np.float64(density), np.float64(value)))
       if csv_path is not None:
@@ -1595,7 +1607,7 @@ def hope_encode(
   if csv_path is not None:
     if step % eval_stride != 0:
       nonzeros = sum(np.count_nonzero(v) for v in state.weights.values())
-      final_density = float(nonzeros) / float(initial_nonzeros)
+      final_density = _nonzero_density(nonzeros, initial_nonzeros)
       final_val = float(eval_fn(state.weights)) if eval_fn is not None else 0.0
       csv_rows.append((final_density, final_val))
     _write_density_accuracy_csv(csv_path, csv_rows)
